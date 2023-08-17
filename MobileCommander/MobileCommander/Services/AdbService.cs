@@ -1,4 +1,5 @@
-﻿using MobileCommander.Interfaces;
+﻿using MobileCommander.Const;
+using MobileCommander.Interfaces;
 
 using System.Diagnostics;
 using System.Xml;
@@ -9,14 +10,14 @@ namespace MobileCommander.Services
     {
         public async Task KillAllBackgroundTasksAsync()
         {
-            await ExecuteAdbCommandAsync("shell am kill-all");
+            await ExecuteAdbCommandAsync(AdbCommandKeywords.KillBackgroundTasks);
         }
 
         private async Task ExecuteAdbCommandAsync(string command)
         {
             var processStartInfo = new ProcessStartInfo
             {
-                FileName = "adb",
+                FileName = AdbCommandKeywords.FileName,
                 Arguments = command,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -35,7 +36,7 @@ namespace MobileCommander.Services
         {
             var processStartInfo = new ProcessStartInfo
             {
-                FileName = "adb",
+                FileName = AdbCommandKeywords.FileName,
                 Arguments = command,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -68,24 +69,23 @@ namespace MobileCommander.Services
 
         public async Task SearchQueryWithoutResponseAsync(string searchQuery)
         {
-            await ExecuteAdbCommandAsync("shell am start -n com.android.chrome/com.google.android.apps.chrome.Main");
+            await ExecuteAdbCommandAsync(AdbCommandKeywords.InitChrome);
             await Task.Delay(5000);
-            await ExecuteAdbCommandAsync($"shell input text \"{searchQuery}\"");
-            await ExecuteAdbCommandAsync("shell input keyevent 66");
+            await ExecuteAdbCommandAsync($"{string.Format(AdbCommandKeywords.SearchQueryForChrome, searchQuery)}");
+            await ExecuteAdbCommandAsync(AdbCommandKeywords.Enter);
         }
 
         public async Task<string> SearchQueryWithResponseAsync(string searchQuery)
         {
-            await ExecuteAdbCommandAsync("shell am start -n com.android.chrome/com.google.android.apps.chrome.Main");
+            await ExecuteAdbCommandAsync(AdbCommandKeywords.InitChrome);
             await Task.Delay(5000);
-            await ExecuteAdbCommandAsync($"shell input text \"{searchQuery}\"");
-            await ExecuteAdbCommandAsync("shell input keyevent 66");
+            await ExecuteAdbCommandAsync($"{string.Format(AdbCommandKeywords.SearchQueryForChrome, searchQuery)}");
+            await ExecuteAdbCommandAsync(AdbCommandKeywords.Enter);
             await Task.Delay(10000);
-            await ExecuteAdbCommandAsync("shell uiautomator dump /sdcard/ui_dump.xml");
+            await ExecuteAdbCommandAsync(AdbCommandKeywords.GetCurrentScreenAndSave);
             await Task.Delay(2000);
-
-            var xmlDump = await ExecuteAdbCommandAndGetResponseAsync("shell cat /sdcard/ui_dump.xml");
-            var ipAddress = ExtractIpAddressFromXml(xmlDump);
+            var xml = await ExecuteAdbCommandAndGetResponseAsync(AdbCommandKeywords.DownloadScreen);
+            var ipAddress = ExtractIpAddressFromXml(xml);
 
             return ipAddress;
         }
